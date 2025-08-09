@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hazan — QR Eserleri</title>
+  <meta name="color-scheme" content="dark light">
+  <style>
+    /* ====== Tipografi & Tema ====== */
+    :root{
+      --bg:#0b0e14;
+      --panel:#121826cc;          /* glass panel */
+      --border:#1f2432;
+      --text:#e8edf6;
+      --muted:#9aa4b2;
+      --accent:#8ab4ff;
+      --r:18px;
+      --shadow:0 10px 40px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Yu Gothic UI","Yu Gothic","YuGothic","Segoe UI","Inter","Noto Sans",system-ui,-apple-system,Arial,sans-serif;
+      font-weight:300;             /* Yu Gothic UI Light hissi */
+      letter-spacing:.2px;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, #1c2340 0%, transparent 60%),
+        radial-gradient(900px 600px at 100% 0%, #17324c 0%, transparent 55%),
+        linear-gradient(180deg, #0b0e14 0%, #0d1119 100%);
+      min-height:100%;
+    }
+
+    /* ====== Global Geçiş Perdesi ====== */
+    .page-transition{
+      position:fixed; inset:0; pointer-events:none;
+      background:radial-gradient(1200px 700px at 50% 50%, rgba(19,24,36,.9), rgba(11,14,20,1));
+      transform:scaleY(0); transform-origin:top;
+      transition:transform .45s cubic-bezier(.2,.7,0,.98);
+      z-index:9999;
+    }
+    .page-transition.is-active{ transform:scaleY(1); pointer-events:auto }
+
+    /* ====== Üst Kısım ====== */
+    header{
+      position:sticky; top:0; z-index:5;
+      backdrop-filter:saturate(120%) blur(8px);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      border-bottom:1px solid var(--border);
+    }
+    .bar{max-width:1100px; margin:0 auto; padding:18px 18px; display:flex; gap:14px; align-items:center; justify-content:space-between}
+    .brand{font-weight:500; letter-spacing:.3px}
+    .hint{font-size:13px; color:var(--muted)}
+
+    /* ====== Liste ====== */
+    .wrap{max-width:1100px; margin:24px auto; padding:0 18px 28px}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+      gap:16px;
+    }
+    .card{
+      display:flex; flex-direction:column; gap:10px;
+      padding:14px; border-radius:var(--r);
+      background:var(--panel); border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      outline:0; text-decoration:none; color:inherit;
+      transform:translateY(0) scale(1);
+      transition:transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+    .thumb{
+      position:relative; border-radius:12px; overflow:hidden;
+      aspect-ratio:16/10; background:#0a0d14;
+      display:grid; place-items:center; border:1px solid #202636;
+    }
+    .thumb img, .thumb video{width:100%; height:100%; object-fit:cover; display:block}
+    .badge{
+      position:absolute; right:10px; top:10px; font-size:12px; padding:6px 8px;
+      border-radius:999px; background:#0f1730; border:1px solid #2a3b66; color:#cfe0ff;
+      letter-spacing:.2px
+    }
+    .title{font-size:18px; font-weight:400}
+    .meta{font-size:13px; color:var(--muted)}
+    .card:hover{ transform:translateY(-3px) scale(1.01); border-color:#33415e; background:#151c28cc }
+    .open{
+      margin-top:6px; padding:10px 12px; border-radius:10px;
+      border:1px solid #2a3142; background:#131a26; color:var(--text);
+      font-size:14px; width:max-content;
+    }
+    .open:hover{ border-color:#3b4661; background:#182033 }
+
+    /* küçük yardımcı */
+    .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap}
+  </style>
+</head>
+<body>
+
+  <!-- Sayfa geçiş perdesi -->
+  <div class="page-transition" id="transition"></div>
+
+  <header>
+    <div class="bar">
+      <div class="brand">Hazan Architecture</div>
+      <div class="hint">Kartlara tıklayınca yumuşak geçişle esere gidersin</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1 class="sr">QR Eserleri</h1>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <script>
+    /* ---- Aynı DATA'yı art.html de kullanıyor. Dosya adları birebir uyuşmalı. ---- */
+    const DATA = {
+      "organik-struktur": {
+        type:"image",
+        title:"Organik Strüktür",
+        artist:"Hazan Mimarlık",
+        year:"2025",
+        thumb:"media/organik-struktur.jpg",  // hem kapak hem büyük
+        src:"media/organik-struktur.jpg",
+        desc:"Mavi ışık altında gerilmiş yüzeylerden oluşan organik mekânsal kurgu."
+      },
+      "isik-senaryosu": {
+        type:"video",
+        title:"Işık Senaryosu",
+        artist:"Hazan Mimarlık",
+        year:"2025",
+        thumb:"media/organik-struktur.jpg",  // poster yoksa örnek görsel
+        src:"media/isik-senaryosu.mp4",
+        autoplay:true, muted:true, loop:true, controls:true,
+        desc:"Gece modu atmosferinin kısa kaydı."
+      }
+    };
+
+    // Kartları üret
+    const grid = document.getElementById('grid');
+    for (const [id, item] of Object.entries(DATA)) {
+      const a = document.createElement('a');
+      a.href = `./art.html?id=${encodeURIComponent(id)}`;
+      a.className = 'card';
+      a.dataset.transition = 'true';
+
+      a.innerHTML = `
+        <div class="thumb">
+          ${item.type === 'video'
+            ? `<video muted playsinline preload="metadata" src="${item.src}"></video><span class="badge">Video</span>`
+            : `<img src="${item.thumb || item.src}" alt="${item.title}">`}
+        </div>
+        <div class="title">${item.title}</div>
+        <div class="meta">${item.artist} · ${item.year || ''}</div>
+        <button class="open" aria-label="${item.title} sayfasını aç">Eseri Aç</button>
+      `;
+      grid.appendChild(a);
+    }
+
+    // Sayfa geçişi: link tıklanınca perdeyi kapatıp sonra git
+    const cover = document.getElementById('transition');
+    window.addEventListener('pageshow', ()=> cover.classList.remove('is-active')); // geri gelince
+    document.addEventListener('click', (e)=>{
+      const a = e.target.closest('a[data-transition]');
+      if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey) return;
+      e.preventDefault();
+      cover.classList.add('is-active');
+      setTimeout(()=>{ location.href = a.href; }, 420);
+    });
+
+    // İlk girişte hafif fade-in efekti
+    requestAnimationFrame(()=> document.body.style.opacity = 1);
+  </script>
+</body>
+</html>
